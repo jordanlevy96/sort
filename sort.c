@@ -12,18 +12,6 @@ typedef struct {
    int numLines;
 } Container;
 
-/*
-   sort [OPTION]... [FILE]...
-   Write sorted concatenation of all FILE(s) to standard output
-   Flags include
-      -b, --ignore-leading-blanks : ignore leading blanks
-      -d, --dictionary-order : consider only blanks and alphanumeric characters
-      -f, --ignore-case : fold lower case to upper case characters
-      -i, --ignore-nonprinting : consider only printable characters
-      -n, --numeric-sort : compare according to string numerical value
-      -r, --reverse : reserve the results of comparisons
-*/
-
 //makes the string bigger to accommodate longer lines
 char *ResizeLine(char *line, int *lineLen) {
    char *temp;

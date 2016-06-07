@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #define LINE_LEN 32
 #define LINES_RESIZE 4
@@ -231,6 +232,23 @@ void RemoveLeadingBlanks(char **lines, int numLines) {
    }
 }
 
+//restricts sorting to only search blanks and alphanumeric characters for
+//the |dFlag| (dictionary order)
+void BlanksAndAlphaNumOnly(char **lines, int numLines) {
+   int i, j;
+   char *activeLine;
+
+   for (i = 0; i < numLines; i++) {
+      activeLine = lines[i];
+      for (j = 0; j < strlen(activeLine); j++) {
+         if (!isalnum(activeLine[j]) && activeLine[j] != ' ') {
+            if (activeLine[j] != '\0')
+               activeLine[j] = activeLine[j + 1];
+         }
+      }
+   }
+}
+
 //sorts |container|  based on the flags
 //sorting algorithm used is bubble sort (for simplicity)
 //A clone of the |Container|'s |lines| attribute is used so that, when a flag
@@ -244,6 +262,9 @@ void Sort(Container *container, int bFlag, int dFlag, int fFlag, int iFlag,
 
    if (bFlag)
       RemoveLeadingBlanks(clone, container->numLines);
+
+   if (dFlag)
+      BlanksAndAlphaNumOnly(clone, container->numLines);
 
    for (i = 0; i < container->numLines; i++) {
       for (j = 0; j < container->numLines - 1; j++) {

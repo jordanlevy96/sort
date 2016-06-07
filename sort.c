@@ -193,15 +193,6 @@ void PrintFlags(int b, int d, int f, int i, int n, int r) {
    printf("r: %d\n", r);
 }
 
-//prints all of the lines in the container
-void PrintLines(Container container) {
-   int i;
-
-   for (i = 0; i < container.numLines; i++) {
-      fprintf(stdout, "%s\n", container.lines[i]);
-   }
-}
-
 //duplicates |lines| in container so that lines can be changed for sorting
 //purposes but will still print in their original form
 char **DuplicateLines(Container *container) {
@@ -216,6 +207,15 @@ char **DuplicateLines(Container *container) {
    }
 
    return clone;
+}
+
+//shifts the entire line by one in order to omit a character
+//|ndx| is is the index of the character to be omitted
+void ShiftLine(char *line, int ndx) {
+   int i;
+
+   for (i = ndx; i < strlen(line); i++)
+      line[i] = line[i + 1];
 }
 
 //removes leading blankspaces for the |bFlag|
@@ -240,13 +240,114 @@ void BlanksAndAlphaNumOnly(char **lines, int numLines) {
 
    for (i = 0; i < numLines; i++) {
       activeLine = lines[i];
+
       for (j = 0; j < strlen(activeLine); j++) {
          if (!isalnum(activeLine[j]) && activeLine[j] != ' ') {
             if (activeLine[j] != '\0')
-               activeLine[j] = activeLine[j + 1];
+               ShiftLine(activeLine, j);
          }
       }
    }
+}
+
+//changes all lowercase characters to uppercase for |fFlag|
+void IgnoreCase(char **lines, int numLines) {
+   int i;
+   char *activeLine;
+
+   for (i = 0; i < numLines; i++) {
+      activeLine = lines[i];
+
+      while (*activeLine) {
+         if (isalpha(*activeLine))
+            *activeLine = toupper(*activeLine);
+         activeLine++;
+      }
+   }
+}
+
+//removes all nonprinting characters for |iFlag|
+void IgnoreNonprinting(char **lines, int numLines) {
+   int i, j;
+   char *activeLine;
+
+   for (i = 0; i < numLines; i++) {
+      activeLine = lines[i];
+
+      for (j = 0; j < strlen(activeLine); j++) {
+         if (!isprint(activeLine[j]) && activeLine[j] != '\0') {
+            ShiftLine(activeLine, j);
+         }
+      }
+   }
+}
+
+//specialized print function for NumericSort
+void PrintNumeric(double *array, char **lines, int numNums, int numLines) {
+   int i;
+
+   for (i = 0; i < numLines - numNums; i++)
+      printf("%s\n", lines[i]);
+   for (i = 0; i < numNums; i++)
+      printf("%g\n", array[i]);
+}
+
+void PrintNumericReverse(double *array, char **lines, int numNums,
+ int numLines) {
+   int count = numLines - numNums;
+
+   while (numNums)
+      printf("%g\n", array[numNums--]);
+   while (count)
+      printf("%s\n", lines[count--]);
+}
+
+//changes |lines| into an |double| array and numerically sorts the contents
+//for the nFlag
+void NumericSort(char **lines, int numLines, int rFlag) {
+   double *array, dubTemp;
+   int i, j, ndx1 = 0, ndx2 = 0, numNums = 0; //numNums is a really dumb name
+   char *charTemp, **nonNumLines;
+
+   for (i = 0; i < numLines; i++) {
+      if (strtod(lines[i], NULL))
+         numNums++;
+   }
+
+   array = calloc(sizeof(double), numNums);
+   nonNumLines = calloc(sizeof(char *), numLines - numNums);
+
+   for (i = 0; i < numLines; i++) {
+      if (strtod(lines[i], NULL))
+         array[ndx1++] = strtod(lines[i], NULL);
+      else
+         nonNumLines[ndx2++] = lines[i];
+   }
+
+   //sort each array separately
+   for (i = 0; i < numLines - numNums; i++) {
+      for (j = 0; j < numLines - numNums - 1; j++) {
+         if (strcmp(nonNumLines[j], nonNumLines[j + 1]) > 0) {
+            charTemp = lines[j + 1];
+            lines[j + 1] = lines[j];
+            lines[j] = charTemp;
+         }
+      }
+   }
+   for (i = 0; i < numNums; i++) {
+      for (j = 0; j < numNums - 1; j++) {
+         if (array[j] > array[j + 1]) {
+            dubTemp = array[j + 1];
+            array[j + 1] = array[j];
+            array[j] = dubTemp;
+         }
+      }
+   }
+
+   if (!rFlag)
+      PrintNumeric(array, nonNumLines, numNums, numLines);
+   else
+      PrintNumericReverse(array, nonNumLines, numNums, numLines);
 }
 
 //sorts |container|  based on the flags
@@ -266,6 +367,17 @@ void Sort(Container *container, int bFlag, int dFlag, int fFlag, int iFlag,
    if (dFlag)
       BlanksAndAlphaNumOnly(clone, container->numLines);
 
+   if (fFlag)
+      IgnoreCase(clone, container->numLines);
+
+   if (iFlag)
+      IgnoreNonprinting(clone, container->numLines);
+
+   if (nFlag) {
+      NumericSort(clone, container->numLines, rFlag);
+      exit(EXIT_SUCCESS);
+   }
+
    for (i = 0; i < container->numLines; i++) {
       for (j = 0; j < container->numLines - 1; j++) {
          if (strcmp(clone[j], clone[j + 1]) > 0) {
@@ -282,6 +394,23 @@ void Sort(Container *container, int bFlag, int dFlag, int fFlag, int iFlag,
    }
 }
 
+//prints all of the lines in the container
+void PrintLines(Container container) {
+   int i;
+
+   for (i = 0; i < container.numLines; i++) {
+      fprintf(stdout, "%s\n", container.lines[i]);
+   }
+}
+
+//prints lines in reverse
+void PrintLinesReverse(Container container) {
+   int count = container.numLines - 1;
+
+   while (count)
+      printf("%s\n", container.lines[count--]);
+}
+
 int main(int argc, char **argv) {
    Container *container;
    int bFlag, dFlag, fFlag, iFlag, nFlag, rFlag, numFlags;
@@ -296,7 +425,10 @@ int main(int argc, char **argv) {
 
    Sort(container, bFlag, dFlag, fFlag, iFlag, nFlag, rFlag);
 
-   PrintLines(*container);
+   if (!rFlag)
+      PrintLines(*container);
+   else
+      PrintLinesReverse(*container);
 
    return 0;
 }

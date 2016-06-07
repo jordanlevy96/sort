@@ -283,23 +283,58 @@ void IgnoreNonprinting(char **lines, int numLines) {
 }
 
 //specialized print function for NumericSort
+//needs a special case for "0" because the UNIX sort treats it as a string
+//and prints it first, but for some reason my sorting algorithm isn't putting
+//it in the beginning
 void PrintNumeric(double *array, char **lines, int numNums, int numLines) {
-   int i;
+   int i, zeroCount = 0;
 
-   for (i = 0; i < numLines - numNums; i++)
-      printf("%s\n", lines[i]);
-   for (i = 0; i < numNums; i++)
+   //if there are zeroes in |lines|, print them first.
+   for (i = 0; i < numLines - numNums; i++) {
+      if (!strcmp(lines[i], "0"))
+         zeroCount++;
+   }
+   while (zeroCount--)
+      printf("0\n");
+
+   for (i = 0; i < numLines - numNums; i++) {
+      if (strcmp(lines[i], "0") != 0) //don't print zero again.
+         printf("%s\n", lines[i]);
+   }
+   for (i = 0; i < numNums; i++) {
       printf("%g\n", array[i]);
+   }
 }
 
+//same as |PrintNumeric| but in reverse
 void PrintNumericReverse(double *array, char **lines, int numNums,
  int numLines) {
-   int count = numLines - numNums;
+   int count = numNums - 1, zeroCount = 0, i;
 
-   while (numNums)
-      printf("%g\n", array[numNums--]);
-   while (count)
-      printf("%s\n", lines[count--]);
+   for (i = 0; i < numLines - numNums; i++) {
+      if (!strcmp(lines[i], "0"))
+         zeroCount++;
+   }
+
+   if (*array) {
+      while (count > -1)
+         printf("%g\n", array[count--]);
+   }
+
+   count = numLines - numNums - 1;
+
+   if (*lines) {
+      while (count > -1) {
+         if (strcmp(lines[count], "0") != 0)
+            printf("%s\n", lines[count--]);
+         else
+            count--;
+      }
+   }
+
+   while (zeroCount--)
+      printf("0\n");
+
 }
 
 //changes |lines| into an |double| array and numerically sorts the contents
@@ -407,7 +442,7 @@ void PrintLines(Container container) {
 void PrintLinesReverse(Container container) {
    int count = container.numLines - 1;
 
-   while (count)
+   while (count > -1)
       printf("%s\n", container.lines[count--]);
 }
 

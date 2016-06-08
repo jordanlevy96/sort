@@ -178,6 +178,7 @@ Container *GetLines(int argc, char **argv, int numFlags) {
    return container;
 }
 
+//prints every flag and its value for debugging
 void PrintFlags(int b, int d, int f, int i, int n, int r) {
    printf("FLAGS\n");
    printf("b: %d\n", b);

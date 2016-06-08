@@ -145,12 +145,17 @@ void ReadFromInput(Container *container, FILE *input) {
    }
 }
 
+//extracts lines from each file
 void GetLinesFromFiles(Container *container, char **filenames, int numFiles) {
    FILE *file;
    int i;
 
    for (i = 0; i < numFiles; i++) {
       file = fopen(filenames[i], "r");
+      if (!file) {
+        fprintf(stderr, "open failed: %s: file not found\n", filenames[i]);
+        exit(EXIT_FAILURE);
+      }
       ReadFromInput(container, file);
       fclose(file);
    }

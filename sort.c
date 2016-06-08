@@ -161,6 +161,8 @@ void GetLinesFromFiles(Container *container, char **filenames, int numFiles) {
    }
 }
 
+//|GetLines| gets all of the data from the input and puts it into a
+//|Container|. If there are no given |FILE|s to get input from, it uses stdin.
 Container *GetLines(int argc, char **argv, int numFlags) {
    Container *container = calloc(sizeof(Container), 1);
    int numFiles = argc - numFlags - 1;
@@ -200,6 +202,20 @@ char **DuplicateLines(Container *container) {
    }
 
    return clone;
+}
+
+//frees every string in |lines|
+void FreeLines(char **lines, int numLines) {
+   int i;
+
+   for (i = 0; i < numLines; i++)
+      free(lines[i]);
+}
+
+//frees the entire container
+void FreeContainer(Container *container) {
+   FreeLines(container->lines, container->numLines);
+   free(container);
 }
 
 //shifts the entire line by one in order to omit a character
@@ -376,6 +392,8 @@ void NumericSort(char **lines, int numLines, int rFlag) {
       PrintNumeric(array, nonNumLines, numNums, numLines);
    else
       PrintNumericReverse(array, nonNumLines, numNums, numLines);
+
+   free(array);
 }
 
 //sorts |container|  based on the flags
@@ -403,6 +421,8 @@ void Sort(Container *container, int bFlag, int dFlag, int fFlag, int iFlag,
 
    if (nFlag) {
       NumericSort(clone, container->numLines, rFlag);
+      FreeLines(clone, container->numLines);
+      FreeContainer(container);
       exit(EXIT_SUCCESS);
    }
 
@@ -458,5 +478,6 @@ int main(int argc, char **argv) {
    else
       PrintLinesReverse(*container);
 
+   FreeContainer(container);
    return 0;
 }

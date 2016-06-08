@@ -348,7 +348,7 @@ void PrintNumericReverse(double *array, char **lines, int numNums,
 
 //changes |lines| into an |double| array and numerically sorts the contents
 //for the nFlag
-void NumericSort(char **lines, int numLines, int rFlag) {
+void NumericSort(char **lines, int numLines, int dFlag, int rFlag) {
    double *array, dubTemp;
    int i, j, ndx1 = 0, ndx2 = 0, numNums = 0; //numNums is a really dumb name
    char *charTemp, **nonNumLines;
@@ -367,6 +367,9 @@ void NumericSort(char **lines, int numLines, int rFlag) {
       else
          nonNumLines[ndx2++] = lines[i];
    }
+ 
+   if (dFlag)
+      BlanksAndAlphaNumOnly(nonNumLines, numLines - numNums);
 
    //sort each array separately
    for (i = 0; i < numLines - numNums; i++) {
@@ -410,9 +413,6 @@ void Sort(Container *container, int bFlag, int dFlag, int fFlag, int iFlag,
    if (bFlag)
       RemoveLeadingBlanks(clone, container->numLines);
 
-   if (dFlag)
-      BlanksAndAlphaNumOnly(clone, container->numLines);
-
    if (fFlag)
       IgnoreCase(clone, container->numLines);
 
@@ -420,11 +420,14 @@ void Sort(Container *container, int bFlag, int dFlag, int fFlag, int iFlag,
       IgnoreNonprinting(clone, container->numLines);
 
    if (nFlag) {
-      NumericSort(clone, container->numLines, rFlag);
+      NumericSort(clone, container->numLines, dFlag, rFlag);
       FreeLines(clone, container->numLines);
       FreeContainer(container);
       exit(EXIT_SUCCESS);
    }
+
+   if (dFlag)
+      BlanksAndAlphaNumOnly(clone, container->numLines);
 
    for (i = 0; i < container->numLines; i++) {
       for (j = 0; j < container->numLines - 1; j++) {
